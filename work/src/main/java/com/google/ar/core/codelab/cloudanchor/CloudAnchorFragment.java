@@ -27,13 +27,18 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 import com.google.ar.core.Anchor;
+import com.google.ar.core.Config;
 import com.google.ar.core.HitResult;
+import com.google.ar.core.Session;
+import com.google.ar.core.codelab.cloudanchor.helpers.CloudAnchorManager;
+import com.google.ar.core.codelab.cloudanchor.helpers.SnackbarHelper;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.Scene;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
+import com.google.ar.core.Config.CloudAnchorMode;
 
 /**
  * Main Fragment for the Cloud Anchors Codelab.
@@ -45,6 +50,8 @@ public class CloudAnchorFragment extends ArFragment {
   private Scene arScene;
   private AnchorNode anchorNode;
   private ModelRenderable andyRenderable;
+  private final CloudAnchorManager cloudAnchorManager = new CloudAnchorManager(); ///Bunz
+  private final SnackbarHelper snackbarHelper = new SnackbarHelper(); //Bunz
 
   @Override
   @SuppressWarnings({"AndroidApiChecker", "FutureReturnValueIgnored"})
@@ -72,6 +79,7 @@ public class CloudAnchorFragment extends ArFragment {
     clearButton.setOnClickListener(v -> onClearButtonPressed());
 
     arScene = getArSceneView().getScene();
+    arScene.addOnUpdateListener(frameTime -> cloudAnchorManager.onUpdate());////Bunz
     setOnTapArPlaneListener((hitResult, plane, motionEvent) -> onArPlaneTap(hitResult));
     return rootView;
   }
@@ -82,13 +90,19 @@ public class CloudAnchorFragment extends ArFragment {
       Anchor anchor = hitResult.createAnchor();
       setNewAnchor(anchor);
       //return;
+      ////BUNZ
     }
     Anchor anchor = hitResult.createAnchor();
     setNewAnchor(anchor);
+    /////BUNZ
+    snackbarHelper.showMessage(getActivity(), "Now hosting anchor...");
+    cloudAnchorManager.hostCloudAnchor(
+            getArSceneView().getSession(), anchor, this::onHostedAnchorAvailable);
   }
 
   private synchronized void onClearButtonPressed() {
     // Clear the anchor from the scene.
+    cloudAnchorManager.clearListeners();/////Bunz
     setNewAnchor(null);
   }
 
@@ -122,6 +136,24 @@ public class CloudAnchorFragment extends ArFragment {
       andy.setParent(anchorNode);
       andy.setRenderable(andyRenderable);
       andy.select();
+    }
+  }
+  /////Bunz
+  @Override
+  protected Config getSessionConfiguration(Session session) {
+    Config config = super.getSessionConfiguration(session);
+    config.setCloudAnchorMode(Config.CloudAnchorMode.ENABLED);
+    return config;
+  }
+  ///////BUNZ
+  private synchronized void onHostedAnchorAvailable(Anchor anchor) {
+    Anchor.CloudAnchorState cloudState = anchor.getCloudAnchorState();
+    if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
+      snackbarHelper.showMessage(
+              getActivity(), "Cloud Anchor Hosted. ID: " + anchor.getCloudAnchorId());
+      setNewAnchor(anchor);
+    } else {
+      snackbarHelper.showMessage(getActivity(), "Error while hosting: " + cloudState.toString());
     }
   }
 }
