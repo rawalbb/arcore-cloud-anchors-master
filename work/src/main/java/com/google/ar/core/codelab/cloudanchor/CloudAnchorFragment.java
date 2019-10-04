@@ -17,6 +17,7 @@
 package com.google.ar.core.codelab.cloudanchor;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.Gravity;
@@ -31,7 +32,9 @@ import com.google.ar.core.Config;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.Session;
 import com.google.ar.core.codelab.cloudanchor.helpers.CloudAnchorManager;
+import com.google.ar.core.codelab.cloudanchor.helpers.ResolveDialogFragment;
 import com.google.ar.core.codelab.cloudanchor.helpers.SnackbarHelper;
+import com.google.ar.core.codelab.cloudanchor.helpers.StorageManager;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.Scene;
 import com.google.ar.sceneform.math.Vector3;
@@ -52,17 +55,13 @@ public class CloudAnchorFragment extends ArFragment {
   private ModelRenderable andyRenderable;
   private final CloudAnchorManager cloudAnchorManager = new CloudAnchorManager(); ///Bunz
   private final SnackbarHelper snackbarHelper = new SnackbarHelper(); //Bunz
+  private final StorageManager storageManager = new StorageManager(); //Bunz
+  private Button resolveButton; ///Bunz
+  private Button fence;//Bunz
+  private Button camera; //Bunz
+  public int option = 1;
 
-  @Override
-  @SuppressWarnings({"AndroidApiChecker", "FutureReturnValueIgnored"})
-  public void onAttach(Context context) {
-    super.onAttach(context);
-    ModelRenderable.builder()
-        //.setSource(context, R.raw.andy)
-            .setSource(context, R.raw.fence)
-        .build()
-        .thenAccept(renderable -> andyRenderable = renderable);
-  }
+
 
   @Override
   public View onCreateView(
@@ -78,10 +77,33 @@ public class CloudAnchorFragment extends ArFragment {
     Button clearButton = rootView.findViewById(R.id.clear_button);
     clearButton.setOnClickListener(v -> onClearButtonPressed());
 
+    resolveButton = rootView.findViewById(R.id.resolve_button); ////Bunz
+    resolveButton.setOnClickListener(v -> onResolveButtonPressed()); ////Bunz
+
+    //////FENCE/CAM
+    fence = rootView.findViewById(R.id.fence_button);
+    fence.setOnClickListener(v->onFenceButtonPressed());
+    camera = rootView.findViewById(R.id.cam_button);
+    camera.setOnClickListener(v->onCamButtonPressed());
+
     arScene = getArSceneView().getScene();
     arScene.addOnUpdateListener(frameTime -> cloudAnchorManager.onUpdate());////Bunz
     setOnTapArPlaneListener((hitResult, plane, motionEvent) -> onArPlaneTap(hitResult));
     return rootView;
+  }
+
+  @Override
+  @SuppressWarnings({"AndroidApiChecker", "FutureReturnValueIgnored"})
+  public void onAttach(Context context) {
+    super.onAttach(context);
+    if(option ==1)
+    {
+      ModelRenderable.builder()
+              //.setSource(context, R.raw.andy)
+              .setSource(context, R.raw.fence)
+              .build()
+              .thenAccept(renderable -> andyRenderable = renderable);
+    }
   }
 
   private synchronized void onArPlaneTap(HitResult hitResult) {
@@ -95,6 +117,7 @@ public class CloudAnchorFragment extends ArFragment {
     Anchor anchor = hitResult.createAnchor();
     setNewAnchor(anchor);
     /////BUNZ
+    resolveButton.setEnabled(false);
     snackbarHelper.showMessage(getActivity(), "Now hosting anchor...");
     cloudAnchorManager.hostCloudAnchor(
             getArSceneView().getSession(), anchor, this::onHostedAnchorAvailable);
@@ -103,15 +126,17 @@ public class CloudAnchorFragment extends ArFragment {
   private synchronized void onClearButtonPressed() {
     // Clear the anchor from the scene.
     cloudAnchorManager.clearListeners();/////Bunz
+    resolveButton.setEnabled(true);////Bunz
     setNewAnchor(null);
+
   }
 
   // Modify the renderables when a new anchor is available.
   private synchronized void setNewAnchor(@Nullable Anchor anchor) {
     if (anchorNode != null) {
       // If an AnchorNode existed before, remove and nullify it.
-      //arScene.removeChild(anchorNode);
-      anchorNode = null;
+      arScene.removeChild(anchorNode);
+      //anchorNode = null; //Bunz
     }
     if (anchor != null) {
       if (andyRenderable == null) {
@@ -137,6 +162,7 @@ public class CloudAnchorFragment extends ArFragment {
       andy.setRenderable(andyRenderable);
       andy.select();
     }
+
   }
   /////Bunz
   @Override
@@ -146,7 +172,7 @@ public class CloudAnchorFragment extends ArFragment {
     return config;
   }
   ///////BUNZ
-  private synchronized void onHostedAnchorAvailable(Anchor anchor) {
+  /*private synchronized void onHostedAnchorAvailable(Anchor anchor) {
     Anchor.CloudAnchorState cloudState = anchor.getCloudAnchorState();
     if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
       snackbarHelper.showMessage(
@@ -154,6 +180,69 @@ public class CloudAnchorFragment extends ArFragment {
       setNewAnchor(anchor);
     } else {
       snackbarHelper.showMessage(getActivity(), "Error while hosting: " + cloudState.toString());
+    }
+  }*/
+  private synchronized void onHostedAnchorAvailable(Anchor anchor) {
+    Anchor.CloudAnchorState cloudState = anchor.getCloudAnchorState();
+    if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
+      int shortCode = storageManager.nextShortCode(getActivity());
+      storageManager.storeUsingShortCode(getActivity(), shortCode, anchor.getCloudAnchorId());
+      snackbarHelper.showMessage(
+              getActivity(), "Cloud Anchor Hosted. Short code: " + shortCode);
+      setNewAnchor(anchor);
+    } else {
+      snackbarHelper.showMessage(getActivity(), "Error while hosting: " + cloudState.toString());
+    }
+  }
+
+ /* private synchronized void onResolveButtonPressed() {
+    ResolveDialogFragment dialog = new ResolveDialogFragment();
+    dialog.show(getFragmentManager(), "Resolve");
+
+  }*/
+ private synchronized void onResolveButtonPressed() {
+   ResolveDialogFragment dialog = ResolveDialogFragment.createWithOkListener(
+           this::onShortCodeEntered);;
+   dialog.show(getFragmentManager(), "Resolve");
+ }
+ public void onFenceButtonPressed()
+ {
+   option = 1;
+ }
+
+ public void onCamButtonPressed()
+ {
+   option = 2;
+ }
+
+  private synchronized void onShortCodeEntered(int shortCode) {
+    String cloudAnchorId = storageManager.getCloudAnchorId(getActivity(), shortCode);
+    if (cloudAnchorId == null || cloudAnchorId.isEmpty()) {
+      snackbarHelper.showMessage(
+              getActivity(),
+              "A Cloud Anchor ID for the short code " + shortCode + " was not found.");
+      return;
+    }
+    resolveButton.setEnabled(false);
+    cloudAnchorManager.resolveCloudAnchor(
+            getArSceneView().getSession(),
+            cloudAnchorId,
+            anchor -> onResolvedAnchorAvailable(anchor, shortCode));
+  }
+
+  private synchronized void onResolvedAnchorAvailable(Anchor anchor, int shortCode) {
+    Anchor.CloudAnchorState cloudState = anchor.getCloudAnchorState();
+    if (cloudState == Anchor.CloudAnchorState.SUCCESS) {
+      snackbarHelper.showMessage(getActivity(), "Cloud Anchor Resolved. Short code: " + shortCode);
+      setNewAnchor(anchor);
+    } else {
+      snackbarHelper.showMessage(
+              getActivity(),
+              "Error while resolving anchor with short code "
+                      + shortCode
+                      + ". Error: "
+                      + cloudState.toString());
+      resolveButton.setEnabled(true);
     }
   }
 }

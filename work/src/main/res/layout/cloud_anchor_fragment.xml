@@ -33,5 +33,21 @@
         android:id="@+id/clear_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
+    ///////BUNZ
+    <Button
+        android:text="RESOLVE"
+        android:id="@+id/resolve_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+    <Button
+        android:text="FENCE"
+        android:id="@+id/fence_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+    <Button
+        android:text="CAM"
+        android:id="@+id/cam_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
   </LinearLayout>
 </FrameLayout>
