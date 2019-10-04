@@ -60,6 +60,7 @@ public class CloudAnchorFragment extends ArFragment {
   private Button fence;//Bunz
   private Button camera; //Bunz
   public int option = 1;
+ public Context a;
 
 
 
@@ -79,12 +80,11 @@ public class CloudAnchorFragment extends ArFragment {
 
     resolveButton = rootView.findViewById(R.id.resolve_button); ////Bunz
     resolveButton.setOnClickListener(v -> onResolveButtonPressed()); ////Bunz
+    fence = rootView.findViewById(R.id.fence_button); ////Bunz
+    fence.setOnClickListener(v -> onFenceButtonPressed()); ////Bunz
+    camera = rootView.findViewById(R.id.cam_button); ////Bunz
+    camera.setOnClickListener(v -> onCamButtonPressed()); ////Bunz
 
-    //////FENCE/CAM
-    fence = rootView.findViewById(R.id.fence_button);
-    fence.setOnClickListener(v->onFenceButtonPressed());
-    camera = rootView.findViewById(R.id.cam_button);
-    camera.setOnClickListener(v->onCamButtonPressed());
 
     arScene = getArSceneView().getScene();
     arScene.addOnUpdateListener(frameTime -> cloudAnchorManager.onUpdate());////Bunz
@@ -95,15 +95,16 @@ public class CloudAnchorFragment extends ArFragment {
   @Override
   @SuppressWarnings({"AndroidApiChecker", "FutureReturnValueIgnored"})
   public void onAttach(Context context) {
+    a = context;
     super.onAttach(context);
-    if(option ==1)
-    {
-      ModelRenderable.builder()
-              //.setSource(context, R.raw.andy)
-              .setSource(context, R.raw.fence)
-              .build()
-              .thenAccept(renderable -> andyRenderable = renderable);
-    }
+//    if(option ==1)
+//    {
+//      ModelRenderable.builder()
+//              //.setSource(context, R.raw.andy)
+//              .setSource(context, R.raw.fence)
+//              .build()
+//              .thenAccept(renderable -> andyRenderable = renderable);
+//    }
   }
 
   private synchronized void onArPlaneTap(HitResult hitResult) {
@@ -128,15 +129,14 @@ public class CloudAnchorFragment extends ArFragment {
     cloudAnchorManager.clearListeners();/////Bunz
     resolveButton.setEnabled(true);////Bunz
     setNewAnchor(null);
-
   }
 
   // Modify the renderables when a new anchor is available.
   private synchronized void setNewAnchor(@Nullable Anchor anchor) {
     if (anchorNode != null) {
       // If an AnchorNode existed before, remove and nullify it.
-      arScene.removeChild(anchorNode);
-      //anchorNode = null; //Bunz
+     arScene.removeChild(anchorNode);
+      anchorNode = null; //Bunz
     }
     if (anchor != null) {
       if (andyRenderable == null) {
@@ -207,12 +207,20 @@ public class CloudAnchorFragment extends ArFragment {
  }
  public void onFenceButtonPressed()
  {
-   option = 1;
+   ModelRenderable.builder()
+           //.setSource(context, R.raw.andy)
+           .setSource(a, R.raw.fence)
+           .build()
+           .thenAccept(renderable -> andyRenderable = renderable);
  }
 
  public void onCamButtonPressed()
  {
-   option = 2;
+   ModelRenderable.builder()
+           //.setSource(context, R.raw.andy)
+           .setSource(a, R.raw.andy)
+           .build()
+           .thenAccept(renderable -> andyRenderable = renderable);
  }
 
   private synchronized void onShortCodeEntered(int shortCode) {
