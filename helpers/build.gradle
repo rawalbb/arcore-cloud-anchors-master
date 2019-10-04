@@ -49,3 +49,23 @@ sceneform.asset('models/fence.fbx',
         'default',
         'models/fence.sfa',
         'src/main/res/raw/fence')
+
+sceneform.asset('models/camz.FBX',
+        'default',
+        'models/camz.sfa',
+        'src/main/res/raw/camz')
+
+sceneform.asset('models/camera_fbx.FBX',
+        'default',
+        'models/camera_fbx.sfa',
+        'src/main/res/raw/camera_fbx')
+
+sceneform.asset('models/cam5.FBX',
+        'default',
+        'models/cam5.sfa',
+        'src/main/res/raw/cam5')
+
+sceneform.asset('models/light.FBX',
+        'default',
+        'models/light.sfa',
+        'src/main/res/raw/light')

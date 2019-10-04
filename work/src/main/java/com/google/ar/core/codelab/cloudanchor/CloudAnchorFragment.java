@@ -59,9 +59,10 @@ public class CloudAnchorFragment extends ArFragment {
   private Button resolveButton; ///Bunz
   private Button fence;//Bunz
   private Button camera; //Bunz
+    private Button lightfix;
   public int option = 1;
  public Context a;
-
+ public boolean setClear;
 
 
   @Override
@@ -84,6 +85,8 @@ public class CloudAnchorFragment extends ArFragment {
     fence.setOnClickListener(v -> onFenceButtonPressed()); ////Bunz
     camera = rootView.findViewById(R.id.cam_button); ////Bunz
     camera.setOnClickListener(v -> onCamButtonPressed()); ////Bunz
+      lightfix = rootView.findViewById(R.id.light_button); ////Bunz
+      lightfix.setOnClickListener(v -> onLightButtonPressed()); ////Bunz
 
 
     arScene = getArSceneView().getScene();
@@ -152,12 +155,28 @@ public class CloudAnchorFragment extends ArFragment {
 
       // Create the transformable andy and add it to the anchor.
       TransformableNode andy = new TransformableNode(getTransformationSystem());
-
-      andy.getScaleController().setMinScale(10f);
-      andy.getScaleController().setMaxScale(20f);
+    if(option == 2)
+    {
+      andy.getScaleController().setMinScale(.01f);
+      andy.getScaleController().setMaxScale(2f);
 
       // Set the local scale of the node BEFORE setting its parent
-      andy.setLocalScale(new Vector3(10f, 10f, 10f));
+      andy.setLocalScale(new Vector3(.5f, .5f, .5f));}
+    if(option ==3)
+    {
+        andy.getScaleController().setMinScale(10f);
+        andy.getScaleController().setMaxScale(22f);
+
+        // Set the local scale of the node BEFORE setting its parent
+        andy.setLocalScale(new Vector3(10f, 10f, 10f));}
+        if(option ==4)
+        {
+            andy.getScaleController().setMinScale(.01f);
+            andy.getScaleController().setMaxScale(2f);
+
+            // Set the local scale of the node BEFORE setting its parent
+            andy.setLocalScale(new Vector3(.5f, .5f, .5f));}
+
       andy.setParent(anchorNode);
       andy.setRenderable(andyRenderable);
       andy.select();
@@ -207,6 +226,7 @@ public class CloudAnchorFragment extends ArFragment {
  }
  public void onFenceButtonPressed()
  {
+     option = 3;
    ModelRenderable.builder()
            //.setSource(context, R.raw.andy)
            .setSource(a, R.raw.fence)
@@ -216,12 +236,23 @@ public class CloudAnchorFragment extends ArFragment {
 
  public void onCamButtonPressed()
  {
+     option = 2;
    ModelRenderable.builder()
            //.setSource(context, R.raw.andy)
-           .setSource(a, R.raw.andy)
+           .setSource(a, R.raw.cam5)
            .build()
            .thenAccept(renderable -> andyRenderable = renderable);
  }
+
+    public void onLightButtonPressed()
+    {
+        option = 4;
+        ModelRenderable.builder()
+                //.setSource(context, R.raw.andy)
+                .setSource(a, R.raw.light)
+                .build()
+                .thenAccept(renderable -> andyRenderable = renderable);
+    }
 
   private synchronized void onShortCodeEntered(int shortCode) {
     String cloudAnchorId = storageManager.getCloudAnchorId(getActivity(), shortCode);
